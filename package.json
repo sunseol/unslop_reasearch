@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "check:docs": "node scripts/check-docs.mjs",
-    "test": "node --test scripts/check-docs.test.mjs"
+    "check:tasks": "node scripts/build-tasks.mjs --check",
+    "build:tasks": "node scripts/build-tasks.mjs",
+    "test": "node --test scripts/"
   },
   "engines": {
     "node": ">=22"
