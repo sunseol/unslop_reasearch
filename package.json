@@ -12,7 +12,8 @@
     "review:brief": "node scripts/review-briefs.mjs",
     "check:contamination": "node scripts/check-contamination.mjs",
     "build:pairs": "node scripts/build-pairs.mjs",
-    "test": "node --test \"scripts/**/*.test.mjs\""
+    "challenge": "node app/challenge/server.mjs",
+    "test": "node --test \"scripts/**/*.test.mjs\" \"app/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"
