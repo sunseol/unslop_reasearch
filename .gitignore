@@ -1,1 +1,5 @@
 node_modules/
+
+# 작성 주체·내부 문서 원문을 담은 비공개 데이터 (데이터 Schema 참고)
+data/documents.jsonl
+data/private/
