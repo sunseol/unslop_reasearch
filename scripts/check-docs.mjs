@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import MarkdownIt from 'markdown-it';
 
-const ignored = new Set(['.git', 'node_modules', '_old']);
+// data/는 생성된 데이터와 평가 자료가 들어가는 곳이며 관리 문서를 두지 않는다.
+const ignored = new Set(['.git', 'node_modules', '_old', 'data']);
 const markdown = new MarkdownIt({ html: true });
 
 export function checkDocs(root) {
