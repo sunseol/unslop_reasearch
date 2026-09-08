@@ -124,10 +124,15 @@ function main() {
     return;
   }
   const createdAt = new Date().toISOString();
-  const lines = tasks.map((t) => JSON.stringify({ ...t, created_at: createdAt }));
+  // 통제 트랙만 다시 만든다. 병렬 트랙 등 다른 트랙의 과제는 그대로 보존한다.
+  const existing = existsSync(TARGET)
+    ? readFileSync(TARGET, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l))
+    : [];
+  const preserved = existing.filter((t) => t.track && t.track !== 'controlled');
+  const lines = [...tasks.map((t) => ({ ...t, created_at: createdAt })), ...preserved].map((t) => JSON.stringify(t));
   if (!existsSync('data')) mkdirSync('data');
   writeFileSync(TARGET, `${lines.join('\n')}\n`, 'utf8');
-  console.log(`Wrote ${tasks.length} tasks to ${TARGET}.`);
+  console.log(`Wrote ${tasks.length} controlled tasks (+${preserved.length} preserved) to ${TARGET}.`);
 }
 
 if (import.meta.url === new URL(process.argv[1], 'file:').href || process.argv[1]?.endsWith('build-tasks.mjs')) {

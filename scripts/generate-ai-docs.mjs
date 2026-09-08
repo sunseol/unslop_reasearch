@@ -36,6 +36,7 @@ function parseArgs(argv) {
     const next = () => argv[++i];
     if (a === '--models') args.models = next().split(',');
     else if (a === '--tasks') args.tasks = next().split(',');
+    else if (a === '--track') args.track = next();
     else if (a === '--limit') args.limit = Number(next());
     else if (a === '--concurrency') args.concurrency = Number(next());
     else if (a === '--effort') args.effort = next();
@@ -103,6 +104,7 @@ export function buildRecord({ id, task, model, text, effort, codexVersion }) {
     id,
     kind: 'document',
     task_id: task.id,
+    track: task.track ?? 'controlled',
     text: normalized,
     language: 'ko',
     genre: GENRE_BY_DOMAIN[task.domain] ?? 'other',
@@ -138,6 +140,7 @@ async function main() {
   const models = args.models ?? modelConfig.models.map((m) => m.id);
   let tasks = readJsonl(TASKS);
   if (args.tasks) tasks = tasks.filter((t) => args.tasks.includes(t.id));
+  if (args.track) tasks = tasks.filter((t) => (t.track ?? 'controlled') === args.track);
   const docs = readJsonl(DOCS);
   const done = new Set(docs.filter((d) => d.source?.type === 'ai-controlled').map((d) => `${d.task_id}|${d.source.model}`));
 

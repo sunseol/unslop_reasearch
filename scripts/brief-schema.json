@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reader", "purpose", "domain", "facts", "reader_inferred"],
+  "properties": {
+    "reader": { "type": "string", "description": "대상 독자. 원문에 명시되지 않았으면 문서 유형에서 추정한다." },
+    "reader_inferred": { "type": "boolean", "description": "독자와 목적을 원문에서 직접 확인하지 못하고 추정했으면 true" },
+    "purpose": { "type": "string", "description": "독자가 이 문서로 판단하거나 수행할 일" },
+    "domain": {
+      "type": "string",
+      "enum": ["report", "email", "marketing", "explainer", "technical", "personal", "free"],
+      "description": "Prompt Bank의 7개 영역 중 가장 가까운 것"
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string" },
+      "description": "원문에 있는 사실을 문장 단위로. 순서는 원문과 무관해도 된다. 원문의 근거 없는 주장은 '원문의 주장: '으로 시작한다."
+    }
+  }
+}
