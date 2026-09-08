@@ -75,6 +75,9 @@ export function parsePromptBank(markdown) {
     const task = {
       id: row[1],
       kind: 'task',
+      track: 'controlled',
+      brief_origin: 'authored',
+      derived_from: null,
       domain,
       title,
       reader,

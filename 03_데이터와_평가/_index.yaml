@@ -20,3 +20,11 @@ documents:
     depends_on:
       - strategy-001
       - data-001
+  - id: data-004
+    file: 병렬_말뭉치_계획.md
+    status: draft
+    summary: 웹 수집 사람 문서에서 brief를 추출해 AI 문서를 생성하는 병렬 트랙의 절차, 추출 규칙, 작성 주체 불확실성 처리
+    depends_on:
+      - strategy-001
+      - data-001
+      - data-003
