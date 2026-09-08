@@ -5,3 +5,10 @@ documents:
     summary: 한국어 업무·설명 문서의 문체 품질 문제 8개 유형과 문맥별 판정·기록·시험 기준을 제안하는 초안
     depends_on:
       - strategy-001
+  - id: quality-002
+    file: Taxonomy_시험_계획.md
+    status: draft
+    summary: Taxonomy v0.2를 두 평가자가 실제 문서 30개에 적용하는 첫 시험의 표본·인원·일정·개정 기준
+    depends_on:
+      - quality-001
+      - data-002
