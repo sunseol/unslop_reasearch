@@ -1,0 +1,22 @@
+documents:
+  - id: data-001
+    file: 데이터_Schema.md
+    status: draft
+    summary: 문서·구간·판정·Challenge 응답을 분리해 저장하는 JSON Lines 구조와 구간 좌표·집계 정의
+    depends_on:
+      - strategy-001
+      - quality-001
+  - id: data-002
+    file: Annotation_Guideline.md
+    status: draft
+    summary: 전문 평가자가 Taxonomy를 적용해 판정 레코드를 만들고 불일치를 조정하는 절차
+    depends_on:
+      - quality-001
+      - data-001
+  - id: data-003
+    file: Prompt_Bank.md
+    status: draft
+    summary: 사람과 모델에 같은 조건으로 제공하는 7개 영역 60개 작성 과제와 제공 사실
+    depends_on:
+      - strategy-001
+      - data-001

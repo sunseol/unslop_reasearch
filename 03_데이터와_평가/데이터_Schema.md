@@ -1,0 +1,197 @@
+# 데이터 Schema v0.1
+
+Unslop Challenge, Raw Corpus, 전문 평가자 판정, Gold Benchmark가 공유하는 데이터 구조를 정한다. 현재 결론은 문서·구간·판정을 분리한 JSON Lines 파일로 저장하고, 작성 주체 정보는 판정 파일과 분리해 보관하는 것이다. 필드 구성은 첫 Taxonomy 시험 결과에 따라 바뀔 수 있다.
+
+## 설계 원칙
+
+- **작성 주체와 품질 판정을 분리한다.** 작성 주체(`source`)는 문서 파일에만 있고, 판정 파일은 문서 ID로만 연결한다. 평가자에게 배포하는 자료에는 `source`를 포함하지 않는다.
+- **합의 전 기록을 보존한다.** 개별 평가자의 판정은 수정하거나 삭제하지 않는다. 조정 결과는 별도 레코드로 추가한다.
+- **구간은 정규화한 본문의 좌표와 인용문을 함께 저장한다.** 좌표만으로는 사람이 검증할 수 없고, 인용문만으로는 같은 문장이 반복될 때 위치를 특정할 수 없다.
+- **판정에는 사용한 기준의 버전을 남긴다.** Taxonomy와 Guideline 버전이 다른 판정을 섞어 집계하지 않는다.
+- **Challenge 참여자의 인상과 전문 평가자의 판정은 다른 레코드 종류다.** Challenge의 ‘번역체 같다’ 같은 범주는 `crowd_response`에 그대로 보관하고, Taxonomy 유형으로 자동 변환하지 않는다.
+
+## 저장 형식
+
+파일은 UTF-8, LF 개행의 JSON Lines(`.jsonl`)로 저장한다. 한 줄이 한 레코드다. 모든 레코드는 `id`, `kind`, `created_at`을 가진다. `created_at`은 시간대를 포함한 ISO 8601 형식(`2026-09-08T14:30:00+09:00`)이다.
+
+```text
+data/
+  tasks.jsonl              # 작성 과제 (Prompt Bank)
+  documents.jsonl          # 문서 본문과 메타데이터 (source 포함, 배포 금지)
+  documents.public.jsonl   # source를 제거한 배포용 문서
+  contexts.jsonl           # 평가에 제공하는 독자·목적·과제 문맥 카드
+  judgments.jsonl          # 전문 평가자 판정 (독립·조정 모두)
+  gold.jsonl               # 합의 결과
+  pairs.jsonl              # Challenge에 제시하는 문서 쌍
+  crowd_responses.jsonl    # Challenge 참여자 응답
+  evaluators.jsonl         # 평가자 정보 (익명 ID와 역할만)
+```
+
+ID는 `종류-일련번호` 형식의 소문자 문자열이다(`task-001`, `doc-0042`, `jdg-000731`). 한 번 부여한 ID는 재사용하지 않는다.
+
+## 본문 정규화와 구간 좌표
+
+문서 본문(`text`)은 저장 전에 다음 순서로 정규화한다. 좌표는 정규화된 본문을 기준으로 한다.
+
+1. 유니코드 NFC 정규화.
+2. 개행을 LF로 통일하고, 문단 사이 빈 줄은 하나로 줄인다.
+3. 줄 끝 공백을 제거한다. 그 밖의 공백과 문장 부호는 바꾸지 않는다.
+
+구간(`span`)의 `start`와 `end`는 정규화된 본문의 **유니코드 코드 포인트** 인덱스다. `start`는 포함, `end`는 미포함이다. 자바스크립트의 UTF-16 인덱스와 다를 수 있으므로 저장할 때 코드 포인트로 변환한다. 검증을 위해 `quote`에 해당 구간의 원문을 그대로 넣고, 불러올 때 본문의 해당 범위와 `quote`가 같은지 확인한다.
+
+```json
+{"start": 120, "end": 131, "quote": "혁신적이고 획기적인", "paragraph": 3}
+```
+
+`paragraph`는 0부터 세는 문단 번호다. 표시 편의용이며 좌표의 기준은 아니다.
+
+## 레코드 종류
+
+### task
+
+Prompt Bank의 작성 과제다. 사람과 모델에 같은 `brief`를 제공한다. 과제 목록은 [Prompt Bank](Prompt_Bank.md)에 있다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `domain` | 문자열 | `report`, `email`, `marketing`, `explainer`, `technical`, `personal`, `free` 중 하나 |
+| `title` | 문자열 | 과제를 식별하는 짧은 이름 |
+| `brief` | 문자열 | 작성자에게 그대로 보여 주는 지시문. 독자, 목적, 제공 사실, 분량을 포함한다. |
+| `reader` | 문자열 | 대상 독자 |
+| `purpose` | 문자열 | 독자가 이 문서로 판단하거나 수행할 일 |
+| `length` | 객체 | `{"min": 200, "max": 500, "unit": "chars"}` |
+| `facts` | 문자열 배열 | 작성자가 사용할 수 있는 사실 목록. 없는 사실을 만들지 않게 하기 위한 재료다. |
+
+### document
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `task_id` | 문자열 또는 null | 통제 데이터는 과제 ID, Wild Human과 Hard Negative는 null |
+| `text` | 문자열 | 정규화된 본문 |
+| `language` | 문자열 | 현재는 `ko` |
+| `genre` | 문자열 | `report`, `notice`, `manual`, `email`, `marketing`, `explainer`, `other` |
+| `source` | 객체 | 아래 참고. 배포용 파일에서는 제거한다. |
+| `license` | 문자열 | Wild Human의 재배포 허용 라이선스. 통제 데이터는 수집 동의서 ID. |
+| `collection_note` | 문자열 | 수집 경로, 발췌 여부, 수정 여부 |
+
+`source` 객체의 예:
+
+```json
+{"type": "human-controlled", "author_id": "auth-007", "author_role": "pm", "fictional": false}
+{"type": "ai-controlled", "model": "model-family-a", "model_version": "2026-06", "prompt_id": "task-014", "sampling": {"temperature": 1.0}}
+{"type": "wild-human", "origin_url": "https://...", "retrieved_at": "2026-09-01T10:00:00+09:00"}
+{"type": "hard-negative", "author_id": "auth-002", "fictional": true}
+```
+
+`type`은 `human-controlled`, `ai-controlled`, `wild-human`, `hard-negative` 네 가지다. Hard Negative는 흔한 단서 표현을 정상적으로 쓰는 문서로 수집 시점에 분류한 것이며, 판정 결과가 정상이라는 보증이 아니다. 가상 예시와 수정한 예시는 `fictional: true`로 표시해 실제 원문과 구분한다.
+
+### context
+
+평가자에게 문서와 함께 제공하는 문맥 카드다. 한 문서에 여러 문맥을 붙일 수 있다. 독자나 과제에 따라 판정이 달라지는 사례를 나누어 기록하기 위해서다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `document_id` | 문자열 | 대상 문서 |
+| `reader` | 문자열 | 대상 독자 |
+| `purpose` | 문자열 | 문서 목적 |
+| `task` | 문자열 | 작성 과제 또는 독자가 수행할 일 |
+| `scope` | 객체 | `{"type": "full"}` 또는 `{"type": "excerpt", "start": 0, "end": 480}` |
+| `unknown` | 문자열 배열 | 알 수 없어 제공하지 않는 항목(`reader`, `purpose` 등) |
+
+### judgment
+
+전문 평가자 한 명의 판정 한 건이다. 한 문서에서 여러 구간을 표시하면 구간마다 레코드를 만든다. 문서 전체를 검토했으나 문제 구간이 없으면 `span`이 null인 `normal` 레코드를 하나 만든다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `document_id` | 문자열 | 대상 문서 |
+| `context_id` | 문자열 | 사용한 문맥 카드 |
+| `evaluator_id` | 문자열 | 평가자 |
+| `phase` | 문자열 | `independent`, `adjudication`, `self-consistency` |
+| `review_scope` | 문자열 | `full-document` 또는 `candidate-spans` |
+| `span` | 객체 또는 null | 표시 구간 |
+| `related_spans` | 객체 배열 | 비교 대상 구간. 반복·연결·대조 유형에서 사용한다. |
+| `result` | 문자열 | `problem`, `normal`, `hold` |
+| `type` | 문자열 또는 null | 8개 유형 ID 중 하나. 정하지 못했으면 null |
+| `type_status` | 문자열 | `assigned`(유형 확정), `unassigned`(문제이지만 유형 미확정), `unclassified`(기존 유형에 없음), `not-applicable`(정상·보류) |
+| `candidate_types` | 문자열 배열 | 검토했거나 후보로 남긴 유형 |
+| `reason` | 문자열 | 판정 이유. [Annotation Guideline](Annotation_Guideline.md)의 양식을 따른다. |
+| `hold_needs` | 문자열 | 보류 시 추가로 확인해야 할 내용 |
+| `revision` | 문자열 또는 null | 선택 사항인 수정문 |
+| `taxonomy_version` | 문자열 | 예: `0.2` |
+| `guideline_version` | 문자열 | 예: `0.1` |
+| `duration_sec` | 정수 | 이 문서를 판정하는 데 쓴 시간 |
+
+### gold
+
+두 평가자의 독립 판정을 정렬해 얻은 합의 결과다. 판정을 덮어쓰지 않고 참조한다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `document_id`, `context_id` | 문자열 | 대상 |
+| `span` | 객체 또는 null | 합의된 구간. 두 구간이 겹치면 합집합을 쓰고 `span_note`에 차이를 남긴다. |
+| `result` | 문자열 | `problem`, `normal`, `hold` |
+| `type` | 문자열 또는 null | 합의된 유형 |
+| `agreement` | 문자열 | `agreed`(독립 판정 일치), `adjudicated`(3차 검토로 확정), `unresolved`(미해결) |
+| `judgment_ids` | 문자열 배열 | 근거가 된 모든 판정 |
+| `split` | 문자열 | `revision`(분류 개정용) 또는 `validation`(재검증용). 같은 원문의 발췌·수정본은 한쪽에만 둔다. |
+
+`unresolved`는 Gold로 사용하지 않지만 삭제하지 않는다.
+
+### pair
+
+Challenge에 제시하는 두 문서다. 같은 `task_id`의 문서 두 개로 구성하고, A·B 위치는 제시할 때마다 무작위로 정한다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `task_id` | 문자열 | 두 문서가 공유하는 과제 |
+| `document_ids` | 문자열 배열 | 문서 2개 |
+| `pair_kind` | 문자열 | `human-ai`, `human-human`, `ai-ai`. 작성 주체와 품질이 별개라는 점을 보이기 위해 세 종류를 섞는다. |
+
+### crowd_response
+
+Challenge 참여자 한 명이 한 쌍에 답한 기록이다. 질문 순서는 [Challenge UX Wireframe](../05_제품과_사용_경험/Challenge_UX_Wireframe.md)을 따른다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `session_id` | 문자열 | 참여 세션. 개인 식별 정보는 저장하지 않는다. |
+| `pair_id` | 문자열 | 제시한 쌍 |
+| `position` | 객체 | `{"A": "doc-0012", "B": "doc-0140"}` 실제 제시 위치 |
+| `source_guess` | 객체 | `{"A": "ai", "B": "human"}` |
+| `confidence` | 문자열 | `guess`, `slight`, `fairly`, `certain` |
+| `preference` | 문자열 | `A`, `B`, `similar` |
+| `selected_spans` | 객체 배열 | 문서 ID와 구간. 참여자가 ‘AI스럽거나 불필요하다’고 느낀 부분 |
+| `categories` | 문자열 배열 | `verbose`, `abstract`, `cliche`, `repetitive`, `overexplained`, `translated`, `ai-structure`, `other` |
+| `other_text` | 문자열 | `other` 선택 시 자유 입력 |
+| `timings_ms` | 객체 | 질문별 응답 시간 |
+| `revealed` | 불리언 | 정답 공개 화면까지 도달했는지 |
+
+참여자의 `categories`는 인상 자료다. 특정 구간에 `selected_spans`가 몰리면 전문 평가자에게 보낼 후보 구간으로 쓰되, `judgment`의 `review_scope`에 `candidate-spans`를 기록해 문서 전체 검토와 구분한다.
+
+### evaluator
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| `role` | 문자열 | `annotator`, `adjudicator`, `collector` |
+| `background` | 문자열 | 직군 수준의 정보만 |
+| `trained_on` | 문자열 | 교육에 사용한 Guideline 버전 |
+| `designed_taxonomy` | 불리언 | 분류 설계에 참여했는지. 후속 독자 평가에서 제외하기 위해 기록한다. |
+
+## 집계에 쓰는 정의
+
+- **판정 단위 정렬:** 같은 문서·문맥에서 두 평가자의 구간이 한 글자 이상 겹치면 같은 단위로 본다. 한쪽에만 있는 구간은 상대 평가자가 `normal`로 본 단위로 취급하되, 상대가 문서 전체를 검토한 경우에만 그렇게 한다.
+- **문제 여부 일치율:** 정렬된 단위 중 `result`가 같은 비율. 분모는 두 평가자 모두 판정한 단위다. `hold`는 별도 건수로 보고하고 `normal`로 바꾸지 않는다.
+- **유형 일치율:** 두 평가자가 모두 `problem`으로 본 단위 중 `type`이 같은 비율. `unassigned`·`unclassified`는 분모에 넣고 불일치로 세지 않으며 건수를 따로 보고한다.
+- **구간 겹침:** 같은 단위로 정렬된 두 구간의 코드 포인트 집합 Jaccard 유사도. 임계값은 첫 시험 뒤에 정한다.
+
+이 정의들은 평가자가 기준을 일관되게 적용하는지 보는 자료다. 문서 품질 점수나 자동 경고 임계값을 만드는 데 그대로 쓰지 않는다.
+
+## 근거
+
+[Slop Taxonomy v0.2](../02_문체_품질_기준/Slop_Taxonomy.md)의 판정 방법·구간과 기록·초안 시험 기준, [사업계획서](../unslop_business_plan.md) 6.4절 수집 데이터, 7장 Raw Corpus 구성, 9장 평가자 구성과 작성 주체·품질 분리 원칙을 구조로 옮겼다. 코드 포인트 좌표와 JSON Lines 선택은 이 문서의 제안이다.
+
+## 미결 사항
+
+- **저장소 분리:** 데이터 파일을 이 문서 저장소에 둘지 사업계획서가 말한 `unslop-bench` 저장소로 분리할지 정하지 않았다. 첫 시험 데이터는 이 저장소 밖의 비공개 폴더에 두고, 공개 여부가 정해지면 옮긴다.
+- **Challenge 세션 식별:** 반복 참여 방지와 개인정보 최소화 사이의 방식(쿠키, 짧은 코드, 로그인)을 정하지 않았다.
+- **AI 문서의 생성 조건:** 모델별 샘플링 설정과 시스템 프롬프트 사용 여부를 아직 확정하지 않았다. 사람과 같은 brief만 준다는 원칙은 유지한다.
+- **구간 겹침 임계값과 유형별 최소 표시 범위:** 첫 Taxonomy 시험의 불일치 자료를 본 뒤 정한다.
