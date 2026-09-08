@@ -1,0 +1,7 @@
+documents:
+  - id: quality-001
+    file: Slop_Taxonomy.md
+    status: draft
+    summary: 한국어 업무·설명 문서의 문체 품질 문제 8개 유형과 문맥별 판정·기록·시험 기준을 제안하는 초안
+    depends_on:
+      - strategy-001
