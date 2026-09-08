@@ -12,6 +12,8 @@
     "review:brief": "node scripts/review-briefs.mjs",
     "check:contamination": "node scripts/check-contamination.mjs",
     "build:pairs": "node scripts/build-pairs.mjs",
+    "report:crowd": "node scripts/report-crowd.mjs",
+    "select:sample": "node scripts/select-taxonomy-sample.mjs",
     "challenge": "node app/challenge/server.mjs",
     "test": "node --test \"scripts/**/*.test.mjs\" \"app/**/*.test.mjs\""
   },
