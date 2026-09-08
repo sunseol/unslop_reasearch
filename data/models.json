@@ -1,0 +1,9 @@
+{
+  "note": "AI Controlled 문서 생성에 쓰는 모델 4종. 사업계획서 7.3절의 Model Family A·B·C와 Open-weight Model에 대응한다. 모델 ID는 로컬 codex CLI(opencodex 카탈로그)의 -m 값이다. 2026-09-08 선정. Alibaba 제공자(Qwen·DeepSeek·Kimi)는 API 키 오류로 제외했고, 오픈 웨이트는 GLM으로 대체했다. 네 번째는 서로 다른 모델 계열이 3개뿐이어서 같은 계열의 소형 모델로 채웠다.",
+  "models": [
+    { "id": "gpt-5.5", "family": "A", "role": "model-family-a" },
+    { "id": "anthropic/claude-sonnet-5", "family": "B", "role": "model-family-b" },
+    { "id": "zai/glm-5.3", "family": "open-weight", "role": "open-weight" },
+    { "id": "gpt-5.4-mini", "family": "A-small", "role": "model-family-a-small" }
+  ]
+}

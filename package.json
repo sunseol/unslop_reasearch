@@ -6,6 +6,7 @@
     "check:docs": "node scripts/check-docs.mjs",
     "check:tasks": "node scripts/build-tasks.mjs --check",
     "build:tasks": "node scripts/build-tasks.mjs",
+    "generate:ai": "node scripts/generate-ai-docs.mjs",
     "test": "node --test \"scripts/**/*.test.mjs\""
   },
   "engines": {
