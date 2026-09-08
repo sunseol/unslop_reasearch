@@ -6,7 +6,7 @@
     "check:docs": "node scripts/check-docs.mjs",
     "check:tasks": "node scripts/build-tasks.mjs --check",
     "build:tasks": "node scripts/build-tasks.mjs",
-    "test": "node --test scripts/"
+    "test": "node --test \"scripts/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"
