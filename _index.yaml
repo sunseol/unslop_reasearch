@@ -1,0 +1,11 @@
+documents:
+  - id: repo-001
+    file: README.md
+    status: active
+    summary: 저장소 문서 작성과 관계 추적 및 변경 관리 규칙
+    depends_on: []
+  - id: strategy-001
+    file: unslop_business_plan.md
+    status: draft
+    summary: Unslop의 문제 정의와 데이터 및 제품 사업화 초기 계획
+    depends_on: []
