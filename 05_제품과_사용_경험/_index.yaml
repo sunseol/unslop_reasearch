@@ -1,0 +1,8 @@
+documents:
+  - id: product-001
+    file: Challenge_UX_Wireframe.md
+    status: draft
+    summary: Unslop Challenge의 화면 흐름, 고정 질문 순서, 화면별 요소와 수집 데이터 대응
+    depends_on:
+      - strategy-001
+      - data-001
