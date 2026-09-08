@@ -27,13 +27,23 @@ function readJsonl(path) {
   return readFileSync(path, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
 }
 
+// 산문만 비교한다. 코드 블록, 인라인 코드, URL, 명령어 줄은 brief의 사실 목록을 통해 그대로 옮겨질 수밖에 없어
+// 원문 기억의 증거가 되지 않는다.
+export function proseOnly(text) {
+  return text
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`\n]*`/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/^\s*(\$|>|npm |pip3? |git |sudo |cd |brew |yarn |docker |python3? |node )[^\n]*$/gm, ' ');
+}
+
 // 비교용 정규화: 공백·문장 부호·마크다운 기호를 제거한다.
 export function canon(text) {
   return text.replace(/[\s\p{P}\p{S}]/gu, '');
 }
 
 export function splitSentences(text) {
-  return text
+  return proseOnly(text)
     .split(/(?<=[.!?。])\s+|\n+/)
     .map((s) => s.trim())
     .filter(Boolean);
@@ -41,7 +51,7 @@ export function splitSentences(text) {
 
 // AI 문서 문장 중 사람 문서에 정규화 기준으로 그대로 들어 있는 문장의 비율.
 export function sentenceOverlap(aiText, humanText, minSentence) {
-  const human = canon(humanText);
+  const human = canon(proseOnly(humanText));
   const sentences = splitSentences(aiText).map(canon).filter((s) => Array.from(s).length >= minSentence);
   if (!sentences.length) return { ratio: 0, matched: 0, total: 0 };
   const matched = sentences.filter((s) => human.includes(s)).length;
@@ -83,7 +93,7 @@ function main() {
     const human = byId.get(task.derived_from);
     if (!human) continue;
     const overlap = sentenceOverlap(doc.text, human.text, args.minSentence);
-    const lcs = longestCommonSubstring(canon(doc.text), canon(human.text));
+    const lcs = longestCommonSubstring(canon(proseOnly(doc.text)), canon(proseOnly(human.text)));
     const contaminated = overlap.ratio >= args.sentenceThreshold || lcs.length >= args.lcsThreshold;
     const result = {
       document_id: doc.id,

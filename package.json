@@ -7,6 +7,11 @@
     "check:tasks": "node scripts/build-tasks.mjs --check",
     "build:tasks": "node scripts/build-tasks.mjs",
     "generate:ai": "node scripts/generate-ai-docs.mjs",
+    "collect:human": "node scripts/collect-human-docs.mjs",
+    "extract:brief": "node scripts/extract-brief.mjs",
+    "review:brief": "node scripts/review-briefs.mjs",
+    "check:contamination": "node scripts/check-contamination.mjs",
+    "build:pairs": "node scripts/build-pairs.mjs",
     "test": "node --test \"scripts/**/*.test.mjs\""
   },
   "engines": {
