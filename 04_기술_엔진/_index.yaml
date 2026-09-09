@@ -1,0 +1,9 @@
+documents:
+  - id: engine-001
+    file: Unslop_CLI.md
+    status: draft
+    summary: 한국어 slop 단서를 찾고 의미 보존 범위에서 제거하는 오프라인 결정적 CLI의 설계, 규칙 10개와 Taxonomy 대응, 수정 정책
+    depends_on:
+      - strategy-001
+      - quality-001
+      - data-001

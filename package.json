@@ -2,7 +2,11 @@
   "name": "unslop-docs",
   "private": true,
   "type": "module",
+  "bin": {
+    "unslop": "cli/unslop/bin/unslop.mjs"
+  },
   "scripts": {
+    "unslop": "node cli/unslop/bin/unslop.mjs",
     "check:docs": "node scripts/check-docs.mjs",
     "check:tasks": "node scripts/build-tasks.mjs --check",
     "build:tasks": "node scripts/build-tasks.mjs",
@@ -15,7 +19,7 @@
     "report:crowd": "node scripts/report-crowd.mjs",
     "select:sample": "node scripts/select-taxonomy-sample.mjs",
     "challenge": "node app/challenge/server.mjs",
-    "test": "node --test \"scripts/**/*.test.mjs\" \"app/**/*.test.mjs\""
+    "test": "node --test \"scripts/**/*.test.mjs\" \"app/**/*.test.mjs\" \"cli/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"
