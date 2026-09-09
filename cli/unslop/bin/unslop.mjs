@@ -33,6 +33,7 @@ function usage() {
 사용법:
   unslop check <file...> [--format text|json] [--only IDs] [--disable IDs]
   unslop fix <file...> [--write] [--rules IDs]
+  unslop tui <file>                      대화형 화면에서 발견을 보고 수정을 적용합니다
   unslop rules
 파일 대신 - 를 주면 표준 입력을 읽습니다.`);
 }
@@ -44,6 +45,10 @@ function main() {
   if (command === 'rules') {
     for (const r of RULES_KO) console.log(`${r.id}  ${r.name.padEnd(22)} → ${r.taxonomy.padEnd(24)} ${r.severity}${r.fixable ? '  fixable' : ''}`);
     return;
+  }
+  if (command === 'tui') {
+    if (opts.files.length !== 1 || opts.files[0] === '-') { console.error('사용법: unslop tui <file>'); process.exitCode = 2; return; }
+    return import('../src/tui.mjs').then(({ runTui }) => runTui(opts.files[0], opts)).catch((err) => { console.error(err.message); process.exitCode = 2; });
   }
   if (!['check', 'fix'].includes(command)) { usage(); process.exitCode = 2; return; }
   if (!opts.files.length) { usage(); process.exitCode = 2; return; }
