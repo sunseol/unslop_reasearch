@@ -6,3 +6,6 @@ data/private/
 
 # Challenge 참여 응답. 공개 가능하지만 실행마다 바뀌므로 공개 시점에 별도 커밋한다.
 data/crowd_responses.jsonl
+
+# 이벤트 페이지 원본 압축 파일(200MB 이상). GitHub 파일 크기 한도를 넘어 커밋할 수 없다.
+unslop-event.zip

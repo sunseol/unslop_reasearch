@@ -33,13 +33,19 @@ function usage() {
 사용법:
   unslop check <file...> [--format text|json] [--only IDs] [--disable IDs]
   unslop fix <file...> [--write] [--rules IDs]
-  unslop tui <file>                      대화형 화면에서 발견을 보고 수정을 적용합니다
+  unslop                                 대화형 화면(TUI) 시작
+  unslop tui [file]                      대화형 화면에서 파일을 바로 엽니다
   unslop rules
 파일 대신 - 를 주면 표준 입력을 읽습니다.`);
 }
 
 function main() {
-  const { command, opts } = parse(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  // 인자 없이 터미널에서 실행하면 TUI 홈으로 들어간다. 파이프 환경에서는 사용법을 보여 준다.
+  if (!argv.length && process.stdin.isTTY && process.stdout.isTTY) {
+    return import('../src/tui.mjs').then(({ runTui }) => runTui(null, {})).catch((err) => { console.error(err.message); process.exitCode = 2; });
+  }
+  const { command, opts } = parse(argv);
   if (!command || command === '--help' || command === '-h') return usage();
   if (command === '--version' || command === '-v') return console.log(VERSION);
   if (command === 'rules') {
@@ -47,8 +53,8 @@ function main() {
     return;
   }
   if (command === 'tui') {
-    if (opts.files.length !== 1 || opts.files[0] === '-') { console.error('사용법: unslop tui <file>'); process.exitCode = 2; return; }
-    return import('../src/tui.mjs').then(({ runTui }) => runTui(opts.files[0], opts)).catch((err) => { console.error(err.message); process.exitCode = 2; });
+    if (opts.files.length > 1 || opts.files[0] === '-') { console.error('사용법: unslop tui [file]'); process.exitCode = 2; return; }
+    return import('../src/tui.mjs').then(({ runTui }) => runTui(opts.files[0] ?? null, opts)).catch((err) => { console.error(err.message); process.exitCode = 2; });
   }
   if (!['check', 'fix'].includes(command)) { usage(); process.exitCode = 2; return; }
   if (!opts.files.length) { usage(); process.exitCode = 2; return; }
